@@ -72,7 +72,7 @@ if ($route.query.error == "invalid password") {
                 class="hidden border dark:border-neutral-800 md:flex md:justify-center md:items-center basis-2/4 rounded-lg"
             >
                 <UIcon
-                    name="i-file-icons-nuxt"
+                    name="i-logos-nuxt-icon"
                     class="w-2/4 h-2/4 text-neutral-800"
                 />
             </section>
