@@ -6,6 +6,4 @@ const $reactiveObj: module = reactive({
     todos: [],
 });
 
-
-
 export {$reactiveObj};

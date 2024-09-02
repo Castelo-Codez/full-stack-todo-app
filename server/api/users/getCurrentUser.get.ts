@@ -8,7 +8,7 @@ export default eventHandler(async (event) => {
     if (session) {
         user = session.user;
     }
-    await connect(process.env.MONGO_URL);
+    await connect(useRuntimeConfig().mongoDbUrl);
     let $foundUser = await User.findOne({
         email: user.email,
     });

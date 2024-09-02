@@ -1,6 +1,8 @@
 <script setup lang="ts">
 const headers = useRequestHeaders(["cookie"]) as HeadersInit;
 import {$reactiveObj} from "../store/todos";
+import {type TodoSchema} from "../../../schema/schemaOfTodo";
+
 const columns = [
     {
         key: "title",
@@ -26,18 +28,30 @@ const columns = [
 
 const selectedColumns = ref([...columns]);
 
-const $Porps = defineProps<{
+let $Props = defineProps<{
     todos: [];
 }>();
-
 const page = ref(1);
 const pageCount = 5;
 
-const $todos = computed(() => {
-    return $Porps.todos.slice(
+const $todos = computed<{}[]>(() => {
+    return $Props.todos.slice(
         (page.value - 1) * pageCount,
         page.value * pageCount
     );
+});
+
+const q: Ref<string> = ref("");
+let filteredRows = computed<null | {}[]>(() => {
+    if (!q.value) {
+        return null;
+    }
+
+    return $Props.todos.filter((todo: TodoSchema) => {
+        return Object.values(todo).some((value) => {
+            return String(value).toLowerCase().includes(q.value.toLowerCase());
+        });
+    });
 });
 
 function $changeStatus(id: number, status: boolean) {
@@ -47,8 +61,11 @@ function $changeStatus(id: number, status: boolean) {
         method: "POST",
     });
 }
+
 function deleteOne(id: number) {
-    $reactiveObj.todos = $reactiveObj.todos.filter((el: any) => el.id !== id);
+    $reactiveObj.todos =  $reactiveObj.todos.filter(
+        (el: TodoSchema) => el.id !== id
+    );
     $fetch("/api/todos/deletetodo", {
         body: {id: id},
         headers,
@@ -61,19 +78,52 @@ function deleteOne(id: number) {
         aria-label="data of todos"
         class="max-w-[700px] px-3 mx-auto mt-10"
     >
-        <div class="flex py-5 border-b border-gray-200 dark:border-gray-700">
+        <div
+            class="flex justify-between items-center py-5 border-b border-gray-200 dark:border-gray-700"
+        >
             <USelectMenu
                 v-model="selectedColumns"
                 :options="columns"
                 multiple
                 placeholder="Columns"
             />
+            <UInput
+                icon="i-heroicons-magnifying-glass-20-solid"
+                v-model="q"
+                size="sm"
+                placeholder="Filter Todos..."
+            />
         </div>
-
+        <UTable
+            :columns="selectedColumns"
+            class="font-[600] text-sm"
+            :rows="filteredRows"
+            v-if="filteredRows"
+        >
+            <template #expand="{row}">
+                <div class="p-4 flex items-center justify-between">
+                    <UToggle
+                        size="md"
+                        off-icon="i-heroicons-x-mark-20-solid"
+                        v-model="row.done"
+                        @change="$changeStatus(row.id, row.done)"
+                    />
+                    <UButton
+                        color="red"
+                        class="mr-[6%] md:mr-[7%]"
+                        @click="deleteOne(row.id)"
+                    >
+                        <template #trailing>
+                            <UIcon name="i-ion-trash-outline" class="w-4 h-4" />
+                        </template>
+                    </UButton>
+                </div> </template
+        ></UTable>
         <UTable
             :columns="selectedColumns"
             class="font-[600] text-sm"
             :rows="$todos"
+            v-else
         >
             <template #expand="{row}">
                 <div class="p-4 flex items-center justify-between">
@@ -101,6 +151,7 @@ function deleteOne(id: number) {
                 v-model="page"
                 :page-count="pageCount"
                 :total="$props.todos.length"
+                v-if="!filteredRows"
             />
         </div>
     </section>
